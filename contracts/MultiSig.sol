@@ -15,7 +15,7 @@ contract MultiSig {
     }
     mapping(address => Signer) public signers;
 
-    constructor() public {
+    constructor() {
         owner = msg.sender;
     }
 
@@ -24,12 +24,15 @@ contract MultiSig {
         _;
     }
 
+    receive() external payable{}
+
     function AddSigner(address newSigner) public onlyOwner {
         signers[newSigner] = Signer(newSigner, false);
         signersAccounts.push(newSigner);
     }
 
     function Sign() public {
+        if(signers[msg.sender].plp == address(0x0))console.log("unknown account");
         require(signers[msg.sender].plp != address(0x0), "Who are you? 403");
         signers[msg.sender].signed = true;
         Action();
@@ -49,6 +52,43 @@ contract MultiSig {
             console.log("Signs are missing");
         } else {
             console.log("Your action here");
+            PayDividends();
         }
+    }
+
+    function PayDividends() internal{
+        uint balance = address(this).balance;
+        console.log(signersAccounts.length);
+        for (uint256 i = 0; i < signersAccounts.length; i++) {
+            console.log(toAsciiString(signers[signersAccounts[i]].plp));
+            address payable payableAddress = payable(signers[signersAccounts[i]].plp);
+            console.log("payable address created");
+            if(address(this).balance >= balance / signersAccounts.length){
+                (bool sent, bytes memory data) = payableAddress.call{value: balance / signersAccounts.length}("");
+                console.log(sent);
+                require(sent, "Failed to send Ether");
+                console.log(address(this).balance);
+            }
+            else{
+                console.log("Insufficient funds");
+            }
+        }
+    }
+
+    function toAsciiString(address x) internal view returns (string memory) {
+        bytes memory s = new bytes(40);
+        for (uint i = 0; i < 20; i++) {
+            bytes1 b = bytes1(uint8(uint(uint160(x)) / (2**(8*(19 - i)))));
+            bytes1 hi = bytes1(uint8(b) / 16);
+            bytes1 lo = bytes1(uint8(b) - 16 * uint8(hi));
+            s[2*i] = char(hi);
+            s[2*i+1] = char(lo);
+        }
+        return string(s);
+    }
+
+    function char(bytes1 b) internal view returns (bytes1 c) {
+        if (uint8(b) < 10) return bytes1(uint8(b) + 0x30);
+        else return bytes1(uint8(b) + 0x57);
     }
 }

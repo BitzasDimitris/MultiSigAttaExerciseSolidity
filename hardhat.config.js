@@ -12,7 +12,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
-
+ const deploy_secret = "dbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97";
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
@@ -24,6 +24,11 @@ module.exports = {
   networks: {
     hardhat: {
       chainId: 1337,
+    },
+    aws: {
+      url: "http://3.135.233.113:8545",
+      chainId: 1337,
+      accounts: [`0x${deploy_secret}`],
     },
   },
 };
